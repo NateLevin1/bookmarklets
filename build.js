@@ -1,5 +1,4 @@
 import fs from "node:fs/promises";
-import path from "node:path";
 import glob from "glob";
 import JS from "uglify-js";
 import chalk from "chalk";
@@ -11,10 +10,15 @@ glob("*.js", async (err, files) => {
         if (fileName === "build.js") continue;
         console.log(chalk.gray(`Building ${fileName}...`));
         const file = await fs.readFile(fileName, "utf-8");
+        const [_match, name] = file.match(/\/\/\s*name:\s*(.+)/);
         const { code: minified, error } = JS.minify(file);
         if (error) throw error;
         const bookmarklet = createBookmarklet(minified);
-        await fs.writeFile(path.join(fileName.replace(".js", "")), bookmarklet);
+        await fs.writeFile(fileName.replace(".js", ""), bookmarklet);
+        await fs.writeFile(
+            "install-" + fileName.replace(".js", ".url"),
+            "[InternetShortcut]\r\nURL=" + createInstallUrl(bookmarklet, name)
+        );
     }
 
     console.log(chalk.green("✓ Built all bookmarklets successfully."));
@@ -24,5 +28,11 @@ glob("*.js", async (err, files) => {
  * @param {string} js
  */
 function createBookmarklet(js) {
-    return encodeURI("javascript:!function(){" + js + "}()");
+    return encodeURIComponent("javascript:!function(){" + js + "}()");
+}
+
+function createInstallUrl(bookmarklet, name) {
+    return `https://install-bookmarklet.pages.dev/?url=${bookmarklet}&name=${encodeURIComponent(
+        name
+    )}`;
 }
