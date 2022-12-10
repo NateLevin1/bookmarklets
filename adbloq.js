@@ -25,6 +25,10 @@ const removeAds = (rootNode) => {
         "*[class*=-ads-]",
         "*[id*=_ads_]",
         "*[class*=_ads_]",
+        "*[id^=ad_]",
+        "*[id^=ad-]",
+        "*[id^=ads_]",
+        "*[id^=ads-]",
         "*[id*=google_ad]",
         "*[class*=google_ad]",
         "*[data-google-query-id]",
@@ -38,6 +42,7 @@ const removeAds = (rootNode) => {
         "video[src*=Aniview]",
         "iframe[srcDoc*=celtra]",
         "*[class*=bx-campaign]",
+        ".ads-mode",
 
         // from: google.com
         "*[data-text-ad]",
@@ -48,6 +53,17 @@ const removeAds = (rootNode) => {
         "*[title*=Primis]",
     ];
     rm(rootNode.querySelectorAll(removeIfQueryMatches.join(",")));
+
+    // * Site-specific hacks
+    const domain = window.location.hostname;
+    if (domain.endsWith("wikipedia.org")) {
+        const fundraisingBanner = document.querySelector(
+            "div[aria-label^=fundraising]"
+        );
+        fundraisingBanner?.querySelector(".frb-inline-close")?.click?.();
+    } else if (domain.endsWith("sporcle.com")) {
+        document.querySelector(".avp-p-cn-close")?.click?.();
+    }
 };
 
 // re-run on mutation of DOM
@@ -61,12 +77,3 @@ const observer = new MutationObserver((mutations) => {
 observer.observe(document.body, { childList: true, subtree: true });
 
 removeAds(document.body);
-
-// * Site-specific hacks
-
-if (window.location.hostname.endsWith("wikipedia.org")) {
-    const fundraisingBanner = document.querySelector(
-        "div[aria-label^=fundraising]"
-    );
-    fundraisingBanner?.querySelector(".frb-inline-close")?.click?.();
-}
