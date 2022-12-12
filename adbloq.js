@@ -51,6 +51,11 @@ const removeAds = (rootNode) => {
         "*[class*=primisslate]",
         "*[id*=primis_]",
         "*[title*=Primis]",
+
+        // from: taboola.com
+        "*[data-ad-unit-name]",
+        "*[id*=taboola]",
+        "*[class*=taboola]",
     ];
     rm(rootNode.querySelectorAll(removeIfQueryMatches.join(",")));
 
