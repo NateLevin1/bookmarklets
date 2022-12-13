@@ -56,6 +56,9 @@ const removeAds = (rootNode) => {
         "*[data-ad-unit-name]",
         "*[id*=taboola]",
         "*[class*=taboola]",
+
+        // from: outbrain.com
+        "phoenix-outbrain",
     ];
     rm(rootNode.querySelectorAll(removeIfQueryMatches.join(",")));
 
