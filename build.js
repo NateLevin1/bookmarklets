@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import glob from "glob";
 import JS from "uglify-js";
 import chalk from "chalk";
+import path from "node:path";
 
 glob("*.js", async (err, files) => {
     if (err) throw err;
@@ -19,9 +20,16 @@ glob("*.js", async (err, files) => {
         const bookmarklet = createBookmarklet(minified);
         const installUrl = createInstallUrl(bookmarklet, name);
 
-        await fs.writeFile(asciiName, bookmarklet);
+        await fs.writeFile(path.join("dist", asciiName + ".min.js"), minified);
         await fs.writeFile(
-            "install-" + fileName.replace(".js", ".url"),
+            path.join("dist", asciiName + ".bookmarklet.txt"),
+            bookmarklet
+        );
+        await fs.writeFile(
+            path.join(
+                "installers",
+                "install-" + fileName.replace(".js", ".url")
+            ),
             "[InternetShortcut]\r\nURL=" + installUrl
         );
         readme = readme.replace(
