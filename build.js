@@ -46,7 +46,7 @@ glob("*.js", async (err, files) => {
  * @param {string} js
  */
 function createBookmarklet(js) {
-    return encodeURIComponent("javascript:!function(){" + js + "}()");
+    return "javascript:" + encodeURIComponent("!function(){" + js + "}()");
 }
 
 function createInstallUrl(bookmarklet, name) {
