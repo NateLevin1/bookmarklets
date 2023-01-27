@@ -22,7 +22,7 @@ for (const video of videos) {
     video.addEventListener("ratechange", () => {
         // make sure evil websites can't prevent this!
         const timeSinceChange = Date.now() - timeWhenChanged;
-        if (timeSinceChange < 500) {
+        if (video.playbackRate != newPlaybackRate && timeSinceChange < 500) {
             // the website has automatically changed it -- evil!
             console.info(
                 "⏱ AnySpeed - This website is automatically changing the playback speed... Bypassing the defenses!"
