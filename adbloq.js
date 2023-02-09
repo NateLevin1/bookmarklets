@@ -34,6 +34,7 @@ const removeAds = (rootNode) => {
         "*[data-google-query-id]",
         "*[data-google-av-adk]",
         "*[aria-label*=Advertisement]",
+        'iframe[title*=" ad "]',
 
         // from: sporcle.com
         ".GoogleActiveViewElement",
@@ -84,4 +85,10 @@ const observer = new MutationObserver((mutations) => {
 });
 observer.observe(document.body, { childList: true, subtree: true });
 
-removeAds(document.body);
+// some evil websites put ads outside of the <body> element, but we don't want to force
+// the browser to check all of <head> in the usual case, so we only do it if necessary
+if (document.documentElement.children.length <= 2) {
+    removeAds(document.body);
+} else {
+    removeAds(document.documentElement);
+}
