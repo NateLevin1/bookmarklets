@@ -35,6 +35,7 @@ const removeAds = (rootNode) => {
         "*[data-google-av-adk]",
         "*[aria-label*=Advertisement]",
         'iframe[title*=" ad "]',
+        "cnx",
 
         // from: sporcle.com
         ".GoogleActiveViewElement",
