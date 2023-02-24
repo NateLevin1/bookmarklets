@@ -4,6 +4,18 @@
 // desc: Easily change the speed of all videos on a page, even on sites that prevent you!
 //
 
+const domain = window.location.hostname;
+
+if (domain === "drive.google.com") {
+    // Google drive loads videos inside an iframe, so we open the iframe in a new tab
+    const playerIframe = document.getElementById(
+        "drive-viewer-video-player-object-0"
+    );
+    alert("Please re-activate AnySpeed in the URL that will open shortly");
+    window.open(playerIframe.src, "_blank");
+    throw new Error("Can't use AnySpeed on Google Drive.");
+}
+
 const videos = Array.from(document.querySelectorAll("video"));
 
 const newPlaybackRate = Number(prompt("What rate do you want?"));
