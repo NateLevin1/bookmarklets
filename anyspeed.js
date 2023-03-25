@@ -48,3 +48,38 @@ function repeatedlySpeedUp(video) {
     video.playbackRate = window.anySpeedPlaybackRate;
     requestAnimationFrame(() => repeatedlySpeedUp(video));
 }
+
+// Some sites don't use native HTML <video> -- instead, they use an iframe of youtube.com
+// -> to control the speed, we then have to use the YouTube IFrame API
+//    see https://developers.google.com/youtube/iframe_api_reference
+const possibleYouTubePlayers = Array.from(
+    document.querySelectorAll(
+        "iframe[src*='youtube.com'], iframe[src*='youtubeeducation.com']"
+    )
+);
+for (const playerIframe of possibleYouTubePlayers) {
+    try {
+        if (!playerIframe?.contentWindow?.postMessage) continue;
+        // this is how the youtube api works as of Mar 2023
+        // we *must* repeatedly speed up even if the website is respecting our change,
+        // because there isn't a way for us to determine if we are being interrupted
+        repeatedlySendYouTubeMessage(playerIframe);
+    } catch (e) {
+        console.error(
+            "AnySpeed detected YouTube on this page, but something went wrong controlling the speed: ",
+            e
+        );
+    }
+}
+
+function repeatedlySendYouTubeMessage(playerIframe) {
+    const messageObject = {
+        event: "command",
+        func: "setPlaybackRate",
+        args: [window.anySpeedPlaybackRate],
+        id: 1,
+        channel: "widget",
+    };
+    playerIframe.contentWindow.postMessage(JSON.stringify(messageObject), "*");
+    requestAnimationFrame(() => repeatedlySendYouTubeMessage(playerIframe));
+}
