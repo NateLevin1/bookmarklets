@@ -45,6 +45,7 @@ const removeAds = (rootNode) => {
         "iframe[srcDoc*=celtra]",
         "*[class*=bx-campaign]",
         ".ads-mode",
+        "video[src*=adnxs-simple]",
 
         // from: google.com
         "*[data-text-ad]",
