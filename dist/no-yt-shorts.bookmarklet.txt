@@ -1,0 +1,1 @@
+javascript:!function()%7Bif(!window.location.href.includes(%22youtube.com%2Fshorts%22))throw%20alert(%22You%20are%20not%20browsing%20a%20short%20right%20now.%22)%2Cnew%20Error(%22Not%20on%20YT%20Shorts%22)%3Bwindow.location.href%3Dwindow.location.href.replace(%22youtube.com%2Fshorts%2F%22%2C%22youtube.com%2Fwatch%3Fv%3D%22)%3B%7D()
