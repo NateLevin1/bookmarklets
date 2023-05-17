@@ -34,8 +34,9 @@ Array.prototype.push = function (...arguments) {
 
 // tell user to interact with game to try to trigger the injector
 setTimeout(() => {
-    if (!game); //alert("Unable to quickly inject. Try interacting with the game!");
-}, 1_000);
+    if (!game)
+        alert("Unable to quickly inject. Try interacting with the game!");
+}, 2_000);
 
 function startDevTools(game) {
     console.log("%cStarting Phaser DevTools...", "color: gray");
@@ -79,19 +80,23 @@ class PhaserDevTools extends Phaser.Scene {
                 `margin-left: ${game.canvas.style.marginLeft};`,
                 "position: absolute;",
                 "overflow: hidden;",
-                "pointer-events: " + game.config.domPointerEvents + ";",
+                "pointer-events: " +
+                    (game.config.domPointerEvents ?? "none") +
+                    ";",
                 "transform: scale(1);",
                 "transform-origin: left top;",
+                "z-index: 999999999",
             ].join(" ");
 
-            document.body.prepend(game.domContainer);
-
-            document.body.style.overflow = "hidden";
-            document.body.style.width = "100%";
-            document.body.style.height = "100%";
+            phaserGame.canvas.parentNode.prepend(game.domContainer);
 
             // get everything back in sync, shouldn't be needed but kept for compat
             game.scale.refresh();
+
+            console.log(
+                "Created DOM container as it didn't exist:",
+                game.domContainer
+            );
         }
 
         this.addOptionsDOMElements();
@@ -132,7 +137,7 @@ class PhaserDevTools extends Phaser.Scene {
             0,
             0,
             options,
-            `width: 75px; height: 75px; opacity: 0.75; backdrop-filter: blur(2px); overflow: hidden; padding: 1rem; border-radius: 0px 0px 53px 0px;
+            `width: 75px; height: 75px; opacity: 0.75; backdrop-filter: blur(2px); overflow: hidden; padding: 16px; border-radius: 0px 0px 53px 0px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; box-sizing: content-box;
             background-image: linear-gradient(45deg, hsl(219deg 100% 18% / 0.2) 0%, hsl(307deg 56% 28% / 0.2) 25%, hsl(343deg 60% 43% / 0.2) 50%, hsl(19deg 65% 48% / 0.2) 75%, hsl(49deg 100% 38% / 0.2) 100%);`
         );
         optionsPhaser.setOrigin(0, 0);
@@ -146,10 +151,10 @@ class PhaserDevTools extends Phaser.Scene {
         const headerText = document.createElement("p");
         headerText.textContent = "Phaser DevTools";
         headerText.style.cssText =
-            "font-size: 1.7rem; color: white; position: absolute; right: 10px; opacity: 0; top: -150px; filter: drop-shadow(1px 1px 1px black); margin: 0; font-family: sans-serif;";
+            "font-size: 27px; color: white; position: absolute; right: 10px; opacity: 0; top: -150px; filter: drop-shadow(1px 1px 1px black); margin: 0;";
 
         const enabler = document.createElement("button");
-        enabler.style.cssText = `width: 70px; height: 70px; border-radius: 99999px; backdrop-filter: blur(10px); filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5)); border: none; outline: none; cursor: pointer; display: grid; place-items: center; font-size: 2rem;
+        enabler.style.cssText = `width: 70px; height: 70px; border-radius: 99999px; backdrop-filter: blur(10px); filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5)); border: none; outline: none; cursor: pointer; display: grid; place-items: center; font-size: 32px;
         background-image: linear-gradient(45deg, hsl(240deg 100% 20%) 0%, hsl(289deg 100% 21%) 6%, hsl(315deg 100% 27%) 14%, hsl(329deg 100% 36%) 23%, hsl(337deg 100% 43%) 35%, hsl(357deg 91% 59%) 47%, hsl(17deg 100% 59%) 60%, hsl(34deg 100% 53%) 74%, hsl(45deg 100% 50%) 88%, hsl(55deg 100% 50%) 100%);`;
         enabler.textContent = "🛟";
         enabler.onclick = () => {
@@ -234,7 +239,7 @@ class PhaserDevTools extends Phaser.Scene {
 function makeInfoText(text) {
     const node = document.createElement("p");
     node.style.cssText =
-        "margin: 0.1rem 0; color: white; filter: drop-shadow(1px 1px 1px black);";
+        "margin: 2px 0; color: white; filter: drop-shadow(1px 1px 1px black);";
     node.textContent = text;
     return node;
 }
