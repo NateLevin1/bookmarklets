@@ -1,9 +1,9 @@
 //
-// name: 🛟 Phaser Devtools
+// name: 🛟 Phaser DevTools
 // author: Nate Levin (https://natelev.in)
 //
 
-console.log("Activated 🛟 Phaser Devtools bookmarklet.");
+console.log("Activated 🛟 Phaser DevTools bookmarklet.");
 
 if (!window.Phaser)
     throw new Error("This page does not expose any Phaser object :(");
@@ -46,6 +46,7 @@ function startDevTools(game) {
 // this manages all the devtools. only 1 should be loaded at a time
 class PhaserDevTools extends Phaser.Scene {
     enabled = false;
+    inspectOptions = {};
 
     constructor() {
         super();
@@ -160,6 +161,10 @@ class PhaserDevTools extends Phaser.Scene {
         enabler.onclick = () => {
             this.enabled = !this.enabled;
 
+            if (this.inspectOptions.gameObject) {
+                this.stopInspect();
+            }
+
             const animOpts = {
                 easing: "ease-out",
                 duration: 300,
@@ -179,6 +184,12 @@ class PhaserDevTools extends Phaser.Scene {
                 headerText.animate([{ opacity: 0, top: "-150px" }], animOpts);
             }
         };
+        this.input.addListener("pointerdown", () => {
+            // allow users to press the spacebar without closing/opening the menu
+            if (document.activeElement === enabler) {
+                enabler.blur();
+            }
+        });
 
         header.appendChild(enabler);
         header.appendChild(headerText);
@@ -193,6 +204,32 @@ class PhaserDevTools extends Phaser.Scene {
                 "Injected successfully. You can now use `phaserGame` in the DevTools console to access the Phaser Game object."
             )
         );
+
+        scrollableOptions.append(
+            makeInfoText(
+                "ℹ️ Shift+Click on a GameObject to lock/unlock the inspector",
+                "margin: 10px 0;"
+            )
+        );
+
+        this.inspector = document.createElement("div");
+        this.inspector.style.marginTop = "20px";
+        this.inspector.style.padding = "5px";
+        this.inspector.style.border = "1px dotted white";
+
+        this.inspectorText = makeInfoText("Inspector - Nothing Selected");
+        this.inspector.append(this.inspectorText);
+
+        this.inspectorItems = document.createElement("div");
+        this.inspector.append(this.inspectorItems);
+
+        scrollableOptions.append(this.inspector);
+
+        this.scrollableOptions = scrollableOptions;
+
+        setTimeout(() => {
+            enabler.click();
+        }, 300);
     }
     loadAllGameObjects() {
         this.forAllGameObjects((gameObject) => {
@@ -202,28 +239,105 @@ class PhaserDevTools extends Phaser.Scene {
 
             if (!alreadyDebugging && gameObject.active) {
                 gameObject.setData("__phaser_devtools_loaded", true);
-                gameObject.setInteractive();
+                if (!gameObject.input) {
+                    gameObject.setInteractive();
+                    if (gameObject.depth === 0) {
+                        gameObject.setDepth(-1);
+                    }
+                }
 
-                gameObject.on("pointerover", () => {
+                gameObject.addListener("pointerover", () => {
                     if (
                         this.enabled &&
-                        !!HoverPipeline &&
-                        gameObject.setPostPipeline &&
+                        !this.inspectOptions.locked &&
                         !isBackgroundItem(gameObject, this.sys)
                     )
-                        gameObject.setPostPipeline(HoverPipeline.KEY);
+                        this.inspect(gameObject, {
+                            locked: false,
+                        });
                 });
-                gameObject.on("pointerout", () => {
+                gameObject.addListener("pointerout", () => {
                     if (
                         this.enabled &&
-                        !!HoverPipeline &&
-                        gameObject.resetPostPipeline &&
+                        this.inspectOptions.gameObject === gameObject &&
+                        !this.inspectOptions.locked &&
                         !isBackgroundItem(gameObject, this.sys)
                     )
-                        gameObject.resetPostPipeline();
+                        this.stopInspect();
+                });
+                gameObject.addListener("destroy", () => {
+                    if (this.inspectOptions.gameObject === gameObject) {
+                        this.stopInspect();
+                    }
+                });
+                gameObject.addListener("pointerdown", (pointer) => {
+                    if (pointer.event.shiftKey && this.enabled) {
+                        // lock inspector
+                        this.inspectOptions.locked =
+                            !this.inspectOptions.locked;
+
+                        if (
+                            !this.inspectOptions.locked &&
+                            this.inspectOptions.gameObject
+                        ) {
+                            this.stopInspect();
+                        }
+                    }
                 });
             }
         });
+    }
+    inspect(gameObject, options = {}) {
+        if (this.inspectOptions.gameObject) {
+            this.stopInspect();
+        }
+        this.inspectOptions = { gameObject, ...options };
+
+        if (!!HoverPipeline && gameObject.setPostPipeline) {
+            gameObject.setPostPipeline(HoverPipeline.KEY);
+        }
+        this.inspectorText.textContent =
+            "Inspector - " +
+            gameObject.type +
+            (!!gameObject.name ? " - " + gameObject.name : "");
+
+        if (gameObject.state) {
+            this.inspectorItems.append(
+                makeInfoText("State: " + gameObject.state)
+            );
+        }
+
+        const dataValuesWithoutPhaserDevTools = gameObject.data.values
+            ? Object.fromEntries(
+                  Object.entries(gameObject.data.values).filter(
+                      ([key, _value]) => !key.startsWith("__phaser_devtools")
+                  )
+              )
+            : undefined;
+        if (
+            dataValuesWithoutPhaserDevTools &&
+            Object.keys(dataValuesWithoutPhaserDevTools).length > 0
+        ) {
+            this.inspectorItems.append(
+                makeInfoText(
+                    "Data Values: " +
+                        JSON.stringify(
+                            dataValuesWithoutPhaserDevTools,
+                            null,
+                            2
+                        ),
+                    "white-space: pre-wrap;"
+                )
+            );
+        }
+    }
+    stopInspect() {
+        if (this.inspectOptions.gameObject.resetPostPipeline) {
+            this.inspectOptions.gameObject.resetPostPipeline();
+        }
+        this.inspectOptions = {};
+        this.inspectorText.textContent = "Inspector - Nothing Selected";
+        this.inspectorItems.innerHTML = "";
     }
     forAllGameObjects(callback) {
         const scenes = this.getActiveScenes();
@@ -236,10 +350,11 @@ class PhaserDevTools extends Phaser.Scene {
     }
 }
 
-function makeInfoText(text) {
+function makeInfoText(text, css = "") {
     const node = document.createElement("p");
     node.style.cssText =
-        "margin: 2px 0; color: white; filter: drop-shadow(1px 1px 1px black);";
+        "margin: 2px 0; color: white; filter: drop-shadow(1px 1px 1px black);" +
+        css;
     node.textContent = text;
     return node;
 }
