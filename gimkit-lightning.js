@@ -34,11 +34,7 @@ const onWsMessage = function (event) {
             text,
         }));
 
-        const [_qMatch, questionText] = questionData.match(
-            /�editor�text�([^�]+)�/
-        );
-
-        answers.push({ id, questionText, correctAnswers });
+        answers.push({ id, correctAnswers });
     }
 };
 
@@ -52,6 +48,7 @@ let answerIndex = 0;
 setInterval(() => {
     if (
         !answers ||
+        answers.length === 0 ||
         window.__gimkitLightningWebsocket.readyState > 1 ||
         clapping
     )
