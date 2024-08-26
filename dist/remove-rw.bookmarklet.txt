@@ -1,0 +1,1 @@
+javascript:!function()%7Bdocument.querySelector(%22gw-toolbar%22)%3F.remove()%2Cdocument.querySelector(%22gw-toolbarear%22)%3F.remove()%3B%7D()

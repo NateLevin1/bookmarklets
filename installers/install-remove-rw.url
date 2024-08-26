@@ -1,0 +1,2 @@
+[InternetShortcut]
+URL=https://install-bookmarklet.pages.dev/?url=javascript:!function()%7Bdocument.querySelector(%22gw-toolbar%22)%3F.remove()%2Cdocument.querySelector(%22gw-toolbarear%22)%3F.remove()%3B%7D()&name=%F0%9F%AA%9B%20Remove%20R%26W%20Toolbar
