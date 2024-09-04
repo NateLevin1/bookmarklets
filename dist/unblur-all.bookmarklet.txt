@@ -1,0 +1,1 @@
+javascript:!function()%7Bconst%20style%3Ddocument.createElement(%22style%22)%3Bstyle.innerHTML%3D%60%0A%20%20*%20%7B%0A%20%20%20%20filter%3A%20none%20!important%3B%0A%20%20%20%20backdrop-filter%3A%20none%20!important%3B%0A%20%20%20%20-webkit-backdrop-filter%3A%20none%20!important%3B%0A%20%20%7D%0A%60%2Cdocument.head.appendChild(style)%3B%7D()
