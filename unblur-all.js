@@ -5,7 +5,7 @@
 //
 
 const style = document.createElement("style");
-style.innerHTML = `
+style.textContent = `
   * {
     filter: none !important;
     backdrop-filter: none !important;

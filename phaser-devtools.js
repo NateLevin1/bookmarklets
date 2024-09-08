@@ -337,7 +337,9 @@ class PhaserDevTools extends Phaser.Scene {
         }
         this.inspectOptions = {};
         this.inspectorText.textContent = "Inspector - Nothing Selected";
-        this.inspectorItems.innerHTML = "";
+        while (this.inspectorItems.firstChild) {
+            this.inspectorItems.removeChild(this.inspectorItems.firstChild);
+        }
     }
     forAllGameObjects(callback) {
         const scenes = this.getActiveScenes();
