@@ -17,6 +17,9 @@ const onWsMessage = function (event) {
     // Gimkit uses a binary format, but we can just parse it as if it is text
     // With a bit of reverse engineering, you can find that it will send out the questions including their answers!
     // console.log("🚨 Received msg: ", { data }, readableStrData);
+    // if (readableStrData.length > 40) {
+    //     console.log("🚨 Received msg: ", { data }, readableStrData);
+    // }
 
     if (strData.includes("STATE_UPDATE�data��type�GAME_QUESTIONS")) {
         console.log("🚨📣 Received STATE_UPDATE: ", { data }, readableStrData);
@@ -53,8 +56,14 @@ const onWsMessage = function (event) {
     } else if (strData.includes("DEVICES_STATES_CHANGES")) {
         // this is sent for all the 2d
         is2DGame = true;
-        const jsonStartIndex = strData.indexOf('[{"type":"mc","position":0,');
-        if (jsonStartIndex === -1) return;
+        // sometimes the id comes first in the JSON, sometimes it comes at the end.
+        // we handle both scenarios with this code.
+        // e.g: [{"_id":"6478a86b0f02e00031b28c22","type":"mc","position":0, ...
+        const indexOfMc = strData.indexOf('"type":"mc","position":0');
+        if (indexOfMc === -1) {
+            return;
+        }
+        const jsonStartIndex = strData.lastIndexOf("[", indexOfMc);
         let strDataSliced = strData.slice(jsonStartIndex);
         const jsonEndIndex = strDataSliced.indexOf('__v":0}]');
         strDataSliced = strDataSliced.slice(0, jsonEndIndex + 8);
@@ -67,9 +76,9 @@ const onWsMessage = function (event) {
             const correctAnswers = question.answers
                 .filter((ans) => !!ans.correct)
                 .map((ans) => ({ id: ans["_id"], text: ans.text }));
-            console.log(question);
             answers.set(question["text"], { id, correctAnswers });
         }
+        console.log("🚨 Found answers:", answers);
     }
 };
 
@@ -187,11 +196,13 @@ setInterval(regularGameInterval, 750);
 
 // inject into WebSocket.send to track the game
 let oldSend = WebSocket.prototype.send;
+let lastTriedToCloseWebsocket = 0;
 WebSocket.prototype.send = function (data) {
     // if we haven't gotten the answers after 5s, we should try to force a reconnection
     // so that Gimkit will send us the answers!
     setTimeout(() => {
-        if (!answers) {
+        if (!answers && Date.now() - lastTriedToCloseWebsocket > 5000) {
+            lastTriedToCloseWebsocket = Date.now();
             console.log("❌ Closing websocket for reconnection");
             this.close();
         }
