@@ -39,8 +39,17 @@ const onWsMessage = function (event) {
                 text,
             }));
 
-            answers.push({ id, correctAnswers });
+            // 10/2024 update: Gimkit now subtracts 1 from the hex `id` to form the "actual" submission id
+            // not sure why... but they do it now.
+            // We can avoid this by parsing the number and subtracting 1
+            // but note that the number is greater than max int, so we only do the last two chars.
+            const adjustedId =
+                id.slice(0, id.length - 2) +
+                (parseInt(id.slice(id.length - 2), 16) - 1).toString(16);
+
+            answers.push({ id: adjustedId, correctAnswers });
         }
+        console.log("🚨 Found answers:", answers);
     } else if (strData.includes("DEVICES_STATES_CHANGES")) {
         // this is sent for all the 2d
         is2DGame = true;
@@ -163,11 +172,10 @@ const regularGameInterval = () => {
 
     try {
         // TODO: handle multiple correct answers
+        const sendStr = `\u0004\u0084\u00A4type\u0002\u00A4data\u0092\u00B5blueboat_SEND_MESSAGE\u0083\u00A4room\u00AE${room}\u00A3key\u00B1QUESTION_ANSWERED\u00A4data\u0082\u00AAquestionId\u00B8${id}\u00A6answer\u00B8${correctAnswers[0].id}\u00A7options\u0081\u00A8compress\u00C3\u00A3nsp\u00A1/`;
+        // console.log("🚨🚨🚨📧 Sending answer");
         window.__gimkitLightningWebsocket.send(
-            Uint8Array.from(
-                `\u0004\u0084\u00A4type\u0002\u00A4data\u0092\u00B5blueboat_SEND_MESSAGE\u0083\u00A4room\u00AE${room}\u00A3key\u00B1QUESTION_ANSWERED\u00A4data\u0082\u00AAquestionId\u00B8${id}\u00A6answer\u00B8${correctAnswers[0].id}\u00A7options\u0081\u00A8compress\u00C3\u00A3nsp\u00A1/`,
-                (ch) => ch.charCodeAt(0)
-            )
+            Uint8Array.from(sendStr, (ch) => ch.charCodeAt(0))
         );
     } catch (err) {
         console.error("Error sending correct answer: " + err);
