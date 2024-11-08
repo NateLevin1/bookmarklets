@@ -31,12 +31,12 @@ const onWsMessage = function (event) {
                 strData.match(/�message-([^�]+)�/);
             room = matchedRoom;
         }
-        const questions = strData.split("position").slice(1);
+        const questions = strData.split("�_id�").slice(1);
 
         answers = [];
 
         for (const questionData of questions) {
-            const [_idMatch, id] = questionData.match(/_id�([^�]+)�/);
+            const [_idMatch, id] = questionData.match(/^([^�]+)�/);
 
             const correctAnswers = Array.from(
                 questionData.matchAll(/correctã_id�([^�]+)�text�([^�]+)�/g)
@@ -45,15 +45,7 @@ const onWsMessage = function (event) {
                 text,
             }));
 
-            // 10/2024 update: Gimkit now subtracts 1 from the hex `id` to form the "actual" submission id
-            // not sure why... but they do it now.
-            // We can avoid this by parsing the number and subtracting 1
-            // but note that the number is greater than max int, so we only do the last two chars.
-            const adjustedId =
-                id.slice(0, id.length - 2) +
-                (parseInt(id.slice(id.length - 2), 16) - 1).toString(16);
-
-            answers.push({ id: adjustedId, correctAnswers });
+            answers.push({ id, correctAnswers });
         }
         console.log("🚨 Found answers:", answers);
     } else if (strData.includes("DEVICES_STATES_CHANGES")) {
