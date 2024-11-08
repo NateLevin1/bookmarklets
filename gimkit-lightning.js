@@ -57,12 +57,21 @@ const onWsMessage = function (event) {
         );
         if (nextQuestionIdMatch != null) {
             const [_, nextQuestionId] = nextQuestionIdMatch;
-            answerIndex = answers.findIndex((ans) => ans.id === nextQuestionId);
+            const newAnswerIndex = answers.findIndex(
+                (ans) => ans.id === nextQuestionId
+            );
             // console.log(
             //     "🚨📣 Received DEVICES_STATES_CHANGES, found next question id & index: ",
-            //     nextQuestionId,
-            //     answerIndex
+            //     { nextQuestionId, newAnswerIndex, strData }
             // );
+            if (newAnswerIndex === -1) {
+                console.error(
+                    "❌ Couldn't find the next question id in the answers: ",
+                    { nextQuestionId, newAnswerIndex, strData }
+                );
+            } else {
+                answerIndex = newAnswerIndex;
+            }
             // note that we don't return because we might also have to check for answers
         }
         // now let's check if it gives us the answers
@@ -191,6 +200,11 @@ const sendAnswers = () => {
         clapping
     )
         return;
+
+    if (answerIndex == -1) {
+        console.warn("❌ Couldn't find the next question id in the answers");
+        return;
+    }
 
     const { id, correctAnswers } = answers[answerIndex];
 
