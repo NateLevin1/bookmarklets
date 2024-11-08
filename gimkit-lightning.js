@@ -297,6 +297,32 @@ WebSocket.prototype.send = function (data) {
     return oldSend.call(this, data);
 };
 
+// inject to find phaser game (only applies for 2D modes)
+let oldPush = Array.prototype.push;
+let game;
+Array.prototype.push = function (...arguments) {
+    if (!!this?.[0]?.scene?.game || !!this?.[0]?.gameObject?.scene?.game) {
+        game = this[0]?.scene?.game ?? this[0].gameObject.scene.game;
+        window.__phaserGame = game; // allow editing from devtools console
+        console.log(`%cSuccessfully found Phaser game!`, "color: green");
+        Array.prototype.push = oldPush;
+    }
+
+    return oldPush.call(this, ...arguments);
+};
+
+// some extra controls for 2D modes
+window.addEventListener("keydown", (e) => {
+    if (!window.__phaserGame) return;
+    const game = window.__phaserGame;
+    const mainScene = game.scene.getScenes()[0];
+    if (e.key == "-") {
+        mainScene.cameras.main.setZoom(1);
+    } else if (e.key == "=") {
+        mainScene.cameras.main.setZoom(2);
+    }
+});
+
 function showStatusMsg(msg) {
     document.getElementById("gimkit-lightning-overlay")?.remove();
     const el = document.createElement("div");

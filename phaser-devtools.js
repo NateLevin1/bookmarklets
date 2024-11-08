@@ -17,7 +17,7 @@ window.__phaser_devtools_injected = true;
 let oldPush = Array.prototype.push;
 let game;
 Array.prototype.push = function (...arguments) {
-    if (!!this[0]?.scene || !!this[0]?.gameObject?.scene) {
+    if (!!this?.[0]?.scene?.game || !!this?.[0]?.gameObject?.scene?.game) {
         game = this[0]?.scene?.game ?? this[0].gameObject.scene.game;
         window.phaserGame = game; // allow editing from devtools console
         console.log(`%cSuccessfully found Phaser game!`, "color: green");
