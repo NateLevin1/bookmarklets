@@ -9,6 +9,11 @@ let room = null;
 let is2DGame = false;
 let answerIndex = 0;
 
+if (!window.location.hostname.endsWith("gimkit.com")) {
+    alert("This bookmarklet only works on gimkit.com!");
+    throw new Error("This bookmarklet only works on gimkit.com!");
+}
+
 showStatusMsg("Started. Take any action to begin injection.");
 
 const decoder = new TextDecoder("utf-8");
