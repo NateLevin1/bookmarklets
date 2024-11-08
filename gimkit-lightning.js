@@ -9,6 +9,8 @@ let room = null;
 let is2DGame = false;
 let answerIndex = 0;
 
+showStatusMsg("Started. Take any action to begin injection.");
+
 const decoder = new TextDecoder("utf-8");
 const onWsMessage = function (event) {
     const { data } = event;
@@ -48,6 +50,7 @@ const onWsMessage = function (event) {
             answers.push({ id, correctAnswers });
         }
         console.log("🚨 Found answers:", answers);
+        showStatusMsg("Found answers. Beginning auto-answer.");
     } else if (strData.includes("DEVICES_STATES_CHANGES")) {
         // this is sent for all the 2d
         if (!is2DGame) is2DGame = true;
@@ -105,6 +108,9 @@ const onWsMessage = function (event) {
             });
         }
         console.log("🚨 Found answers:", answers);
+        showStatusMsg(
+            "Found answers. Answer a question to begin auto-answer, press 'b' to toggle."
+        );
     }
 };
 
@@ -192,8 +198,28 @@ const clapChecker = () => {
 };
 setInterval(clapChecker, 250);
 
+let disableSendAnswers = false;
+window.addEventListener("keydown", (e) => {
+    if (e.key == "b") {
+        if (!answers) {
+            showStatusMsg(
+                "Answers not found yet. Answer a question to begin auto-answer."
+            );
+            return;
+        }
+        // enable/disable sending answers
+        // needed for e.g. Snowbrall, because it has a cooldown between sending snowballs and answering questions
+        disableSendAnswers = !disableSendAnswers;
+
+        showStatusMsg(
+            disableSendAnswers ? "Auto-Answer Disabled" : "Auto-Answer Enabled"
+        );
+    }
+});
+
 const sendAnswers = () => {
     if (
+        disableSendAnswers ||
         !answers ||
         answers.length === 0 ||
         window.__gimkitLightningWebsocket.readyState > 1 ||
@@ -265,3 +291,36 @@ WebSocket.prototype.send = function (data) {
 
     return oldSend.call(this, data);
 };
+
+function showStatusMsg(msg) {
+    document.getElementById("gimkit-lightning-overlay")?.remove();
+    const el = document.createElement("div");
+    el.id = "gimkit-lightning-overlay";
+    el.style.position = "fixed";
+    el.style.top = "0";
+    el.style.left = "0";
+    el.style.width = "100%";
+    el.style.height = "5rem";
+    el.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+    el.style.color = "white";
+    el.style.display = "flex";
+    el.style.justifyContent = "center";
+    el.style.alignItems = "center";
+    el.style.zIndex = "999999999";
+    el.style.pointerEvents = "none";
+    el.style.fontSize = "1.3em";
+    el.textContent = "⚡️ Gimkit Lightning: " + msg;
+    document.body.appendChild(el);
+
+    el.animate(
+        {
+            opacity: [1, 0],
+        },
+        {
+            delay: 3000,
+            duration: 1000,
+            easing: "ease-in-out",
+            fill: "forwards",
+        }
+    );
+}
