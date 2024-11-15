@@ -291,6 +291,7 @@ class PhaserDevTools extends Phaser.Scene {
         if (this.inspectOptions.gameObject) {
             this.stopInspect();
         }
+        window.$gameObject = gameObject;
         this.inspectOptions = { gameObject, ...options };
 
         if (!!HoverPipeline && gameObject.setPostPipeline) {

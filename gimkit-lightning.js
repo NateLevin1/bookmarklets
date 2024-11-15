@@ -24,12 +24,12 @@ const onWsMessage = function (event) {
 
     // Gimkit uses a binary format, but we can just parse it as if it is text
     // With a bit of reverse engineering, you can find that it will send out the questions including their answers!
-    // if (!readableStrData.startsWith('"\\u000f')) {
-    //     console.log("🚨 Received msg: ", { data }, readableStrData);
-    // }
-    // if (readableStrData.length > 40) {
-    //     console.log("🚨 Received msg: ", { data }, readableStrData);
-    // }
+    if (
+        !readableStrData.startsWith('"\\u000f') &&
+        readableStrData.length > 40
+    ) {
+        console.log("🚨 Received msg: ", { data }, readableStrData);
+    }
 
     if (strData.includes("STATE_UPDATE�data��type�GAME_QUESTIONS")) {
         console.log("🚨📣 Received STATE_UPDATE: ", { data }, readableStrData);
@@ -125,6 +125,7 @@ const clickRepeatedly = (el) => {
     requestAnimationFrame(() => clickRepeatedly(el));
 };
 
+let zoomAnswer = true;
 const game2DInterval = () => {
     if (
         !is2DGame ||
@@ -183,9 +184,11 @@ const game2DInterval = () => {
         for (const el of els) {
             if (el.textContent === ans.text) {
                 el.click();
-                el.parentElement.style.color = "yellow";
-                el.parentElement.parentElement.parentElement.parentElement.parentElement.style.transform =
-                    "scale(99)";
+                if (zoomAnswer) {
+                    el.parentElement.style.color = "yellow";
+                    el.parentElement.parentElement.parentElement.parentElement.parentElement.style.transform =
+                        "scale(99)";
+                }
             }
         }
     }
@@ -320,6 +323,9 @@ window.addEventListener("keydown", (e) => {
         mainScene.cameras.main.setZoom(1);
     } else if (e.key == "=") {
         mainScene.cameras.main.setZoom(2);
+    } else if (e.key == "z") {
+        zoomAnswer = !zoomAnswer;
+        showStatusMsg(zoomAnswer ? "Zooming answers" : "Not zooming answers");
     }
 });
 
