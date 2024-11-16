@@ -1,0 +1,2 @@
+[InternetShortcut]
+URL=https://install-bookmarklet.pages.dev/?url=javascript:!function()%7BlocalStorage.clear()%2CsessionStorage.clear()%2CindexedDB.databases().then(e%3D%3E%7Bfor(const%20a%20of%20e)indexedDB.deleteDatabase(a.name)%7D)%2Cdocument.cookie.split(%22%3B%22).forEach(e%3D%3E%7Bdocument.cookie%3De.replace(%2F%5E%20%2B%2F%2C%22%22).replace(%2F%3D.*%2F%2C%60%3D%3Bexpires%3D%24%7B(new%20Date).toUTCString()%7D%3Bpath%3D%2F%60)%7D)%2Clocation.reload()%3B%7D()&name=%F0%9F%97%91%EF%B8%8F%20Clear%20Site%20Data
