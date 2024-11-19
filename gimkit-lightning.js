@@ -8,6 +8,7 @@ let answers = null;
 let room = null;
 let is2DGame = false;
 let answerIndex = 0;
+let debugEnabled = false;
 
 if (!window.location.hostname.endsWith("gimkit.com")) {
     alert("This bookmarklet only works on gimkit.com!");
@@ -25,6 +26,7 @@ const onWsMessage = function (event) {
     // Gimkit uses a binary format, but we can just parse it as if it is text
     // With a bit of reverse engineering, you can find that it will send out the questions including their answers!
     if (
+        debugEnabled &&
         !readableStrData.startsWith('"\\u000f') &&
         readableStrData.length > 40
     ) {
@@ -326,6 +328,11 @@ window.addEventListener("keydown", (e) => {
     } else if (e.key == "z") {
         zoomAnswer = !zoomAnswer;
         showStatusMsg(zoomAnswer ? "Zooming answers" : "Not zooming answers");
+    } else if (e.key == "!") {
+        debugEnabled = !debugEnabled;
+        showStatusMsg(
+            debugEnabled ? "Debug Logging Enabled" : "Debug Logging Disabled"
+        );
     }
 });
 
