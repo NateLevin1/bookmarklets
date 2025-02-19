@@ -20,6 +20,13 @@ function getRefs() {
     const API = frameWindow.API;
     return { iframe, frameWindow, frameDocument, API };
 }
+function getPreviewDocument() {
+    const previewFrame = getRefs().frameDocument.querySelector(
+        decode("d2VpdmVyUGVtYXJGaSNlbWFyZmk=")
+    );
+    if (!previewFrame) return null;
+    return previewFrame.contentWindow.document;
+}
 
 createSidebar();
 
@@ -27,6 +34,7 @@ setInterval(() => {
     removeIVODiv();
     autoMuteElements();
     advanceIfCan();
+    showSampleResponse();
 }, 100);
 
 function createSidebar() {
@@ -121,11 +129,8 @@ function createSidebar() {
     const lookupBr = sidebar.querySelector("#eq-lookup-b");
     const lookupCh = sidebar.querySelector("#eq-lookup-c");
     const onLookup = (url) => {
-        const previewFrame = getRefs().frameDocument.querySelector(
-            decode("d2VpdmVyUGVtYXJGaSNlbWFyZmk=")
-        );
-        if (!previewFrame) return;
-        const previewDocument = previewFrame.contentWindow.document;
+        const previewDocument = getPreviewDocument();
+        if (!previewDocument) return;
         const element =
             previewDocument.querySelector(decode("XWRpcVt2aWQ=")) ??
             previewDocument.querySelector("form") ??
@@ -167,15 +172,30 @@ function autoMuteElements() {
         console.log("🚀 Et Quick - Muting audio");
         element.volume = 0;
     }
+
+    // TODO: make a beep sound when a question appears or we finish the entire frame
 }
 
 function advanceIfCan() {
     if (!autoAdvance) return;
     const API = getRefs().API;
+    if (!API[decode("ZW1hckY=")] || !API[decode("bmlhaENlbWFyRg==")]) return;
+
     const isFComplete = API[decode("ZW1hckY=")].isComplete();
     const isFCComplete = API[decode("bmlhaENlbWFyRg==")].isComplete(); // there is a bug when this happens
     if (isFComplete && !isFCComplete) {
         console.log("🚀 Et Quick - Auto-advancing");
         API[decode("bmlhaENlbWFyRg==")].nextFrame();
     }
+}
+
+function showSampleResponse() {
+    const previewDocument = getPreviewDocument();
+    if (!previewDocument) return;
+    const element = previewDocument.querySelector(
+        decode("XSI7ZW5vbjp5YWxwc2lkIj1lbHl0c1t2aWQgbm11bG9jLXRoZ2lyLg==")
+    );
+    if (!element) return;
+    element.style.display = "block";
+    console.log("🚀 Et Quick - Showing sample response");
 }
