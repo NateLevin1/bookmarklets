@@ -10,21 +10,32 @@ const decode = (str) => atob(str).split("").reverse().join("");
 
 // state
 let autoAdvance = false;
+let autoMute = false;
 
 // setup
-const iframe = document.querySelector(decode("ZW1hckZlZ2F0cyNlbWFyZmk="));
-const frameWindow = iframe.contentWindow;
-const frameDocument = frameWindow.document;
-const API = frameWindow.API;
+function getRefs() {
+    const iframe = document.querySelector(decode("ZW1hckZlZ2F0cyNlbWFyZmk="));
+    const frameWindow = iframe.contentWindow;
+    const frameDocument = frameWindow.document;
+    const API = frameWindow.API;
+    return { iframe, frameWindow, frameDocument, API };
+}
 
 createSidebar();
 
 setInterval(() => {
     removeIVODiv();
+    autoMuteElements();
     advanceIfCan();
 }, 100);
 
 function createSidebar() {
+    const existing = document.querySelector("#eq-sidebar");
+    if (existing) {
+        console.warn("🚀 Et Quick has already been loaded on this page.");
+        existing.remove();
+    }
+
     const sidebar = document.createElement("div");
     sidebar.style.position = "fixed";
     sidebar.style.top = "42px";
@@ -34,11 +45,13 @@ function createSidebar() {
     sidebar.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
     sidebar.style.color = "white";
     sidebar.style.zIndex = "100000";
+    sidebar.id = "eq-sidebar";
     sidebar.innerHTML = `
     <h1>🚀 Et Quick</h1>
     <button id="eq-toggle-visible">Hide</button>
     <h2>Settings</h2>
     <button id="eq-autoadvance">Enable Auto-Advance</button>
+    <button id="eq-automute">Enable Auto-Mute</button>
     <h2>Lookups</h2>
     <button id="eq-lookup-g">Lookup G</button>
     <button id="eq-lookup-b">Lookup Br</button>
@@ -95,20 +108,30 @@ function createSidebar() {
             : "Enable Auto-Advance";
     };
 
+    const autoMuteButton = sidebar.querySelector("#eq-automute");
+    autoMuteButton.onclick = () => {
+        autoMute = !autoMute;
+        autoMuteButton.textContent = autoMute
+            ? "Disable Auto-Mute"
+            : "Enable Auto-Mute";
+    };
+
     // lookups
     const lookupG = sidebar.querySelector("#eq-lookup-g");
     const lookupBr = sidebar.querySelector("#eq-lookup-b");
     const lookupCh = sidebar.querySelector("#eq-lookup-c");
     const onLookup = (url) => {
-        const previewFrame = frameDocument.querySelector(
+        const previewFrame = getRefs().frameDocument.querySelector(
             decode("d2VpdmVyUGVtYXJGaSNlbWFyZmk=")
         );
         if (!previewFrame) return;
-        const search = encodeURIComponent(
-            previewFrame.contentWindow.document
-                .querySelector(decode("XWRpcVt2aWQ="))
-                .innerText.trim()
-        );
+        const previewDocument = previewFrame.contentWindow.document;
+        const element =
+            previewDocument.querySelector(decode("XWRpcVt2aWQ=")) ??
+            previewDocument.querySelector("form") ??
+            previewDocument.querySelector("div#main") ??
+            previewDocument.querySelector("div.content");
+        const search = encodeURIComponent(element.innerText.trim());
 
         window.open(url + search, "_blank");
     };
@@ -121,15 +144,34 @@ function createSidebar() {
 }
 
 function removeIVODiv() {
-    const invis = frameDocument.querySelector(decode("dmlkLW8tc2l2bmkj"));
+    const invis = getRefs().frameDocument.querySelector(
+        decode("dmlkLW8tc2l2bmkj")
+    );
     if (!invis) return;
     if (invis.style.pointerEvents === "none") return;
     console.log("🚀 Et Quick - Removing IVO Div");
     invis.style.pointerEvents = "none";
 }
 
+function autoMuteElements() {
+    if (!autoMute) return;
+
+    const frameDocument = getRefs().frameDocument;
+    const elements = [
+        ...frameDocument.querySelectorAll("video"),
+        ...frameDocument.querySelectorAll("audio"),
+    ];
+
+    for (const element of elements) {
+        if (element.volume == 0) continue;
+        console.log("🚀 Et Quick - Muting audio");
+        element.volume = 0;
+    }
+}
+
 function advanceIfCan() {
     if (!autoAdvance) return;
+    const API = getRefs().API;
     const isFComplete = API[decode("ZW1hckY=")].isComplete();
     const isFCComplete = API[decode("bmlhaENlbWFyRg==")].isComplete(); // there is a bug when this happens
     if (isFComplete && !isFCComplete) {
