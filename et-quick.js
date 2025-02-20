@@ -11,6 +11,7 @@ const decode = (str) => atob(str).split("").reverse().join("");
 // state
 let autoAdvance = false;
 let autoMute = false;
+let lastClickedNextActivity = 0;
 
 // setup
 function getRefs() {
@@ -148,6 +149,35 @@ function createSidebar() {
         onLookup(decode("PXE/L21vYy50cGd0YWhjLy86c3B0dGg="));
 }
 
+function playBeep({
+    frequency = 440, // Frequency in Hz
+    duration = 1, // Duration in seconds
+    attack = 0.1, // Attack time in seconds
+    decay = 0.1, // Decay time in seconds
+    sustain = 0.7, // Sustain level (0 to 1)
+    release = 0.2, // Release time in seconds
+} = {}) {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(1, now + attack);
+    gainNode.gain.linearRampToValueAtTime(sustain, now + attack + decay);
+    gainNode.gain.setValueAtTime(sustain, now + duration - release);
+    gainNode.gain.linearRampToValueAtTime(0, now + duration);
+
+    oscillator.start(now);
+    oscillator.stop(now + duration);
+}
+
 function removeIVODiv() {
     const invis = getRefs().frameDocument.querySelector(
         decode("dmlkLW8tc2l2bmkj")
@@ -172,8 +202,6 @@ function autoMuteElements() {
         console.log("🚀 Et Quick - Muting audio");
         element.volume = 0;
     }
-
-    // TODO: make a beep sound when a question appears or we finish the entire frame
 }
 
 function advanceIfCan() {
@@ -182,9 +210,47 @@ function advanceIfCan() {
     if (!API[decode("ZW1hckY=")] || !API[decode("bmlhaENlbWFyRg==")]) return;
 
     const isFComplete = API[decode("ZW1hckY=")].isComplete();
-    const isFCComplete = API[decode("bmlhaENlbWFyRg==")].isComplete(); // there is a bug when this happens
-    if (isFComplete && !isFCComplete) {
-        console.log("🚀 Et Quick - Auto-advancing");
+    const isFCComplete = API[decode("bmlhaENlbWFyRg==")].isComplete();
+    if (isFCComplete) {
+        const right = document.querySelector(decode("dGhnaVJvZy5h"));
+        if (
+            right &&
+            !right.classList.contains("disabled") &&
+            Date.now() - lastClickedNextActivity > 3000
+        ) {
+            console.log("🚀 Et Quick - Auto-advancing to next activity");
+            right.click();
+            lastClickedNextActivity = Date.now();
+        }
+    } else if (isFComplete) {
+        const isVideo =
+            getRefs().frameDocument.querySelector(
+                decode("c2xvcnRub2Nfb2VkaXZfZW1hcmYjdmlk")
+            )?.style?.display == "block";
+
+        if (isVideo && autoMute) {
+            // play a beep if muted and a question comes up after a video
+            setTimeout(() => {
+                const isStillVideo =
+                    getRefs().frameDocument.querySelector(
+                        decode("c2xvcnRub2Nfb2VkaXZfZW1hcmYjdmlk")
+                    )?.style?.display == "block";
+                if (isStillVideo) return;
+
+                console.log("🚀 Et Quick - Playing beep sound");
+                // play a beep sound
+                playBeep({
+                    frequency: 440,
+                    duration: 0.25,
+                    attack: 0.05,
+                    decay: 0.1,
+                    sustain: 0.1,
+                    release: 0.2,
+                });
+            }, 600);
+        }
+
+        console.log("🚀 Et Quick - Auto-advancing to next frame");
         API[decode("bmlhaENlbWFyRg==")].nextFrame();
     }
 }
