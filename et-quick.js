@@ -11,6 +11,7 @@ const decode = (str) => atob(str).split("").reverse().join("");
 // state
 let autoAdvance = false;
 let autoMute = false;
+let autoBlur = false;
 let lastClickedNextActivity = 0;
 
 // setup
@@ -33,7 +34,7 @@ createSidebar();
 
 setInterval(() => {
     removeIVODiv();
-    autoMuteElements();
+    autoMuteAndBlurElements();
     advanceIfCan();
     showSampleResponse();
 }, 100);
@@ -61,6 +62,7 @@ function createSidebar() {
     <h2>Settings</h2>
     <button id="eq-autoadvance">Enable Auto-Advance</button>
     <button id="eq-automute">Enable Auto-Mute</button>
+    <button id="eq-autoblur">Enable Auto-Blur</button>
     <h2>Lookups</h2>
     <button id="eq-lookup-g">Lookup G</button>
     <button id="eq-lookup-b">Lookup Br</button>
@@ -123,6 +125,30 @@ function createSidebar() {
         autoMuteButton.textContent = autoMute
             ? "Disable Auto-Mute"
             : "Enable Auto-Mute";
+
+        if (!autoMute) {
+            const frameDocument = getRefs().frameDocument;
+            for (const element of [
+                ...frameDocument.querySelectorAll("video"),
+                ...frameDocument.querySelectorAll("audio"),
+            ]) {
+                element.volume = 1;
+            }
+        }
+    };
+
+    const autoBlurButton = sidebar.querySelector("#eq-autoblur");
+    autoBlurButton.onclick = () => {
+        autoBlur = !autoBlur;
+        autoBlurButton.textContent = autoBlur
+            ? "Disable Auto-Blur"
+            : "Enable Auto-Blur";
+        if (!autoBlur) {
+            const frameDocument = getRefs().frameDocument;
+            for (const element of frameDocument.querySelectorAll("video")) {
+                element.style.filter = "";
+            }
+        }
     };
 
     // lookups
@@ -188,19 +214,36 @@ function removeIVODiv() {
     invis.style.pointerEvents = "none";
 }
 
-function autoMuteElements() {
-    if (!autoMute) return;
+function autoMuteAndBlurElements() {
+    if (!autoMute && !autoBlur) return;
 
     const frameDocument = getRefs().frameDocument;
-    const elements = [
-        ...frameDocument.querySelectorAll("video"),
-        ...frameDocument.querySelectorAll("audio"),
-    ];
 
-    for (const element of elements) {
-        if (element.volume == 0) continue;
+    const mute = (element) => {
+        if (!autoMute) return;
+        if (element.volume == 0) return;
         console.log("🚀 Et Quick - Muting audio");
         element.volume = 0;
+    };
+
+    const blur = (element) => {
+        if (!autoBlur) return;
+        if (
+            element.tagName !== "VIDEO" ||
+            element.style.filter == "blur(100px)"
+        )
+            return;
+        console.log("🚀 Et Quick - Blurring video");
+        element.style.filter = "blur(100px)";
+    };
+
+    for (const element of frameDocument.querySelectorAll("video")) {
+        mute(element);
+        blur(element);
+    }
+
+    for (const element of frameDocument.querySelectorAll("audio")) {
+        mute(element);
     }
 }
 
